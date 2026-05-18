@@ -72,6 +72,7 @@ def directory(request):
         profiles = EmployeeProfile.objects.filter(
             Q(user__first_name__icontains=query) |
             Q(user__last_name__icontains=query) |
+            Q(middle_name__icontains=query) |
             Q(user__username__icontains=query) |
             Q(job_title__icontains=query) |
             Q(department__name__icontains=query)

@@ -35,7 +35,12 @@
           </div>
           <div class="emp-title">{{ profile.job_title|default:"—" }}</div>
           {% if profile.user.email %}
-          <div class="emp-title mt-1" style="color:#94a3b8;">{{ profile.user.email }}</div>
+          <div class="emp-title mt-1" style="color:#94a3b8;">{{ profile.user.email }}<span class="copy-btn" data-val="{{ profile.user.email }}" title="Copy email" onclick="event.preventDefault();event.stopPropagation();navigator.clipboard.writeText(this.dataset.val);var i=this.querySelector('i');i.className='bi bi-check2 text-success';setTimeout(()=>{i.className='bi bi-clipboard'},1500)"><i class="bi bi-clipboard" style="font-size:.7rem;"></i></span></div>
+          {% endif %}
+          {% if profile.phone %}
+          <div class="emp-title mt-1" style="color:#94a3b8;"><i class="bi bi-telephone me-1"></i>{{ profile.phone }}<span class="copy-btn" data-val="{{ profile.phone }}" title="Copy phone" onclick="event.preventDefault();event.stopPropagation();navigator.clipboard.writeText(this.dataset.val);var i=this.querySelector('i');i.className='bi bi-check2 text-success';setTimeout(()=>{i.className='bi bi-clipboard'},1500)"><i class="bi bi-clipboard" style="font-size:.7rem;"></i></span></div>
+          {% elif profile.mobile %}
+          <div class="emp-title mt-1" style="color:#94a3b8;"><i class="bi bi-phone me-1"></i>{{ profile.mobile }}<span class="copy-btn" data-val="{{ profile.mobile }}" title="Copy phone" onclick="event.preventDefault();event.stopPropagation();navigator.clipboard.writeText(this.dataset.val);var i=this.querySelector('i');i.className='bi bi-check2 text-success';setTimeout(()=>{i.className='bi bi-clipboard'},1500)"><i class="bi bi-clipboard" style="font-size:.7rem;"></i></span></div>
           {% endif %}
         </div>
       </a>

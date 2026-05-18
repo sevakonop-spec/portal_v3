@@ -47,6 +47,7 @@ class EmployeeProfile(models.Model):
         on_delete=models.SET_NULL,
         related_name='employees',
     )
+    middle_name = models.CharField(max_length=100, blank=True)
     job_title = models.CharField(max_length=200, blank=True)
     phone = models.CharField(max_length=50, blank=True)
     mobile = models.CharField(max_length=50, blank=True)
@@ -56,10 +57,12 @@ class EmployeeProfile(models.Model):
     is_manager = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.user.get_full_name() or self.user.username
+        return self.display_name()
 
     def display_name(self):
-        return self.user.get_full_name() or self.user.username
+        parts = [self.user.first_name, self.middle_name, self.user.last_name]
+        full = ' '.join(p for p in parts if p)
+        return full or self.user.username
 
     def avatar_url(self):
         if self.avatar:

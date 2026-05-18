@@ -17,8 +17,9 @@ class UserInfoForm(forms.ModelForm):
 class EmployeeProfileForm(forms.ModelForm):
     class Meta:
         model = EmployeeProfile
-        fields = ['department', 'job_title', 'phone', 'mobile', 'location', 'bio', 'avatar', 'is_manager']
+        fields = ['middle_name', 'department', 'job_title', 'phone', 'mobile', 'location', 'bio', 'avatar', 'is_manager']
         widgets = {
+            'middle_name': forms.TextInput(attrs={'class': 'form-control'}),
             'department': forms.Select(attrs={'class': 'form-select'}),
             'job_title': forms.TextInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7 (000) 000-00-00'}),

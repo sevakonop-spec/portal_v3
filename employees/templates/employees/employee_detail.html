@@ -1,9 +1,9 @@
 {% extends "employees/base.html" %}
-{% block title %}{{ employee.get_full_name|default:employee.username }} — Corporate Portal{% endblock %}
+{% block title %}{{ profile.display_name }} — Corporate Portal{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{% url 'directory' %}">Directory</a></li>
-<li class="breadcrumb-item active">{{ employee.get_full_name|default:employee.username }}</li>
+<li class="breadcrumb-item active">{{ profile.display_name }}</li>
 {% endblock %}
 
 {% block content %}
@@ -21,7 +21,7 @@
             {% endif %}
           </div>
           <div>
-            <h4 class="mb-0">{{ employee.get_full_name|default:employee.username }}</h4>
+            <h4 class="mb-0">{{ profile.display_name }}</h4>
             <p class="text-primary fw-semibold mb-1">{{ profile.job_title|default:"—" }}</p>
             {% if profile.department %}
             <span class="badge bg-light text-secondary border">

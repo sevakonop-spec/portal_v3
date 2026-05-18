@@ -23,6 +23,9 @@
           <div>
             <h4 class="mb-0">{{ profile.display_name }}</h4>
             <p class="text-primary fw-semibold mb-1">{{ profile.job_title|default:"—" }}</p>
+            {% with le=profile.legal_entity %}{% if le %}
+            <p class="text-secondary mb-1" style="font-size:.8rem;"><i class="bi bi-building me-1"></i>Юр. лицо: {{ le.name }}</p>
+            {% endif %}{% endwith %}
             {% if profile.department %}
             <span class="badge bg-light text-secondary border">
               <i class="bi bi-diagram-3 me-1"></i>{{ profile.department.name }}

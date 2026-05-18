@@ -64,6 +64,14 @@ class EmployeeProfile(models.Model):
         full = ' '.join(p for p in parts if p)
         return full or self.user.username
 
+    def legal_entity(self):
+        if not self.department:
+            return None
+        dept = self.department
+        while dept.parent:
+            dept = dept.parent
+        return dept
+
     def avatar_url(self):
         if self.avatar:
             return self.avatar.url

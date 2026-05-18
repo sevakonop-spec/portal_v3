@@ -49,8 +49,14 @@
         <div style="min-width:0">
           <div class="emp-name">{{ profile.display_name }}</div>
           <div class="emp-title">{{ profile.job_title|default:"—" }}</div>
+          {% with le=profile.legal_entity %}{% if le %}
+          <div class="emp-title mt-1" style="font-size:.75rem;color:#94a3b8;"><i class="bi bi-building me-1"></i>{{ le.name }}</div>
+          {% endif %}{% endwith %}
           {% if profile.department %}
           <div class="emp-title mt-1"><i class="bi bi-diagram-3 me-1"></i>{{ profile.department.name }}</div>
+          {% endif %}
+          {% if profile.user.email %}
+          <div class="emp-title mt-1" style="color:#94a3b8;">{{ profile.user.email }}<span class="copy-btn" data-val="{{ profile.user.email }}" title="Copy email" onclick="event.preventDefault();event.stopPropagation();navigator.clipboard.writeText(this.dataset.val);var i=this.querySelector('i');i.className='bi bi-check2 text-success';setTimeout(()=>{i.className='bi bi-clipboard'},1500)"><i class="bi bi-clipboard" style="font-size:.7rem;"></i></span></div>
           {% endif %}
           {% if profile.phone %}
           <div class="emp-title mt-1" style="color:#94a3b8;"><i class="bi bi-telephone me-1"></i>{{ profile.phone }}<span class="copy-btn" data-val="{{ profile.phone }}" title="Copy phone" onclick="event.preventDefault();event.stopPropagation();navigator.clipboard.writeText(this.dataset.val);var i=this.querySelector('i');i.className='bi bi-check2 text-success';setTimeout(()=>{i.className='bi bi-clipboard'},1500)"><i class="bi bi-clipboard" style="font-size:.7rem;"></i></span></div>
@@ -94,6 +100,9 @@
           <div style="min-width:0">
             <div class="emp-name">{{ profile.display_name }}</div>
             <div class="emp-title">{{ profile.job_title|default:"—" }}</div>
+            {% with le=profile.legal_entity %}{% if le %}
+            <div class="emp-title mt-1" style="font-size:.75rem;color:#94a3b8;"><i class="bi bi-building me-1"></i>{{ le.name }}</div>
+            {% endif %}{% endwith %}
             {% if profile.phone %}
             <div class="emp-title mt-1" style="color:#94a3b8;"><i class="bi bi-telephone me-1"></i>{{ profile.phone }}<span class="copy-btn" data-val="{{ profile.phone }}" title="Copy phone" onclick="event.preventDefault();event.stopPropagation();navigator.clipboard.writeText(this.dataset.val);var i=this.querySelector('i');i.className='bi bi-check2 text-success';setTimeout(()=>{i.className='bi bi-clipboard'},1500)"><i class="bi bi-clipboard" style="font-size:.7rem;"></i></span></div>
             {% elif profile.mobile %}

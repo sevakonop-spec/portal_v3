@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}АО "Моспроект-3"{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    :root {
+      --portal-blue: #0066cc;
+      --portal-sidebar: #1a2236;
+      --portal-sidebar-text: #c8d3e8;
+    }
+    body { background: #f0f4f8; min-height: 100vh; }
+    .sidebar {
+      width: 240px; min-height: 100vh;
+      background: var(--portal-sidebar);
+      position: fixed; top: 0; left: 0; z-index: 100;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-logo {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      font-size: 1.1rem; font-weight: 700;
+      color: #fff; letter-spacing: .03em;
+    }
+    .sidebar-logo span { color: #4dabf7; }
+    .sidebar-nav { padding: .75rem 0; flex: 1; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .6rem 1.5rem;
+      color: var(--portal-sidebar-text);
+      text-decoration: none; font-size: .9rem;
+      border-left: 3px solid transparent;
+      transition: background .15s, color .15s;
+    }
+    .sidebar-nav a:hover, .sidebar-nav a.active {
+      background: rgba(255,255,255,.07);
+      color: #fff;
+      border-left-color: #4dabf7;
+    }
+    .sidebar-nav a i { font-size: 1.05rem; width: 1.2rem; text-align: center; }
+    .sidebar-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(255,255,255,.08);
+      font-size: .82rem; color: var(--portal-sidebar-text);
+    }
+    .main-content { margin-left: 240px; padding: 0; }
+    .topbar {
+      background: #fff; border-bottom: 1px solid #e2e8f0;
+      padding: .75rem 2rem; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 90;
+    }
+    .page-body { padding: 2rem; }
+    .avatar-circle {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--portal-blue); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: .95rem; overflow: hidden;
+      flex-shrink: 0;
+    }
+    .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-lg { width: 88px; height: 88px; font-size: 2rem; }
+    .dept-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1rem; }
+    .dept-card-header {
+      padding: .85rem 1.25rem; cursor: pointer;
+      display: flex; align-items: center; gap: .6rem;
+      user-select: none;
+    }
+    .dept-card-header:hover { background: #f8fafc; }
+    .dept-name { font-weight: 600; font-size: .95rem; }
+    .dept-badge {
+      margin-left: auto; background: #e0edff; color: var(--portal-blue);
+      font-size: .75rem; font-weight: 600; border-radius: 99px;
+      padding: .15rem .6rem;
+    }
+    .dept-children { padding: 0 0 0 2rem; }
+    .employee-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: .75rem; padding: .5rem 1.25rem 1.25rem;
+    }
+    .employee-card {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: .85rem 1rem; display: flex; align-items: center; gap: .75rem;
+      text-decoration: none; color: inherit; transition: box-shadow .15s, border-color .15s;
+    }
+    .employee-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); border-color: #93c5fd; }
+    .employee-card.manager-card { border-left: 3px solid #f59e0b; }
+    .emp-name { font-weight: 600; font-size: .88rem; color: #1e293b; }
+    .emp-title { font-size: .78rem; color: #64748b; }
+    .search-bar { max-width: 380px; }
+    .dept-icon { width: 28px; height: 28px; border-radius: 6px; background: #dbeafe;
+      display: flex; align-items: center; justify-content: center; color: var(--portal-blue); flex-shrink: 0; }
+    .breadcrumb-item + .breadcrumb-item::before { content: "/"; }
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-logo"><i class="bi bi-building"></i> АО <span>Моспроект-3</span></div>
+  <nav class="sidebar-nav">
+    <a href="{% url 'directory' %}" class="{% if request.resolver_match.url_name == 'directory' %}active{% endif %}">
+      <i class="bi bi-people-fill"></i> Справочник сотрудников
+    </a>
+    <a href="{% url 'org_tree' %}" class="{% if request.resolver_match.url_name == 'org_tree' %}active{% endif %}">
+      <i class="bi bi-diagram-3-fill"></i> Организационная структура
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'profile_edit' %}" class="{% if request.resolver_match.url_name == 'profile_edit' %}active{% endif %}">
+      <i class="bi bi-person-gear"></i> Мой профиль
+    </a>
+    {% endif %}
+    {% if user.is_staff %}
+    <a href="/admin/">
+      <i class="bi bi-shield-lock-fill"></i> Панель администратора
+    </a>
+    {% endif %}
+  </nav>
+  <div class="sidebar-footer">
+    {% if user.is_authenticated %}
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <div class="avatar-circle" style="width:32px;height:32px;font-size:.8rem;">
+        {% if user.profile.avatar %}
+          <img src="{{ user.profile.avatar.url }}" alt="">
+        {% else %}
+          {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+        {% endif %}
+      </div>
+      <div style="min-width:0">
+        <div style="font-size:.82rem;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          {{ user.get_full_name|default:user.username }}
+        </div>
+        <div style="font-size:.74rem;">{{ user.profile.job_title|default:"—" }}</div>
+      </div>
+    </div>
+    <a href="{% url 'logout' %}" style="color:#f87171;font-size:.82rem;text-decoration:none;">
+      <i class="bi bi-box-arrow-right"></i> Sign out
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="topbar">
+    <div>
+      {% block breadcrumb %}
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0" style="font-size:.85rem;">
+          <li class="breadcrumb-item"><a href="{% url 'directory' %}">Portal</a></li>
+          {% block breadcrumb_items %}{% endblock %}
+        </ol>
+      </nav>
+      {% endblock %}
+    </div>
+    <div>
+      {% if user.is_authenticated %}
+      <a href="{% url 'profile_edit' %}" class="text-decoration-none d-flex align-items-center gap-2">
+        <span style="font-size:.85rem;color:#475569;">{{ user.get_full_name|default:user.username }}</span>
+        <div class="avatar-circle" style="width:36px;height:36px;">
+          {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="">
+          {% else %}
+            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          {% endif %}
+        </div>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="page-body">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

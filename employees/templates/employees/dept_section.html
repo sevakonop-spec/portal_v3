@@ -1,0 +1,58 @@
+{% with dept_id="dept-"|add:dept.pk|stringformat:"s" %}
+<div class="dept-card" style="{% if depth > 0 %}margin-left:{{ depth }}rem;{% endif %}">
+  <div class="dept-card-header" data-bs-toggle="collapse" data-bs-target="#{{ dept_id }}">
+    <div class="dept-icon">
+      {% if depth == 0 %}<i class="bi bi-building"></i>
+      {% elif depth == 1 %}<i class="bi bi-diagram-2"></i>
+      {% else %}<i class="bi bi-folder2"></i>{% endif %}
+    </div>
+    <span class="dept-name">{{ dept.name }}</span>
+    {% if dept.description %}
+    <span class="text-secondary ms-2" style="font-size:.8rem;">{{ dept.description }}</span>
+    {% endif %}
+    <span class="dept-badge">{{ dept.employees.count }}</span>
+    <i class="bi bi-chevron-down ms-2 text-secondary" style="font-size:.75rem;"></i>
+  </div>
+
+  <div id="{{ dept_id }}" class="collapse show">
+    {% with employees=dept.employees.all %}
+    {% if employees %}
+    <div class="employee-grid">
+      {% for profile in employees %}
+      <a href="{% url 'employee_detail' profile.user.pk %}"
+         class="employee-card {% if profile.is_manager %}manager-card{% endif %}">
+        <div class="avatar-circle flex-shrink-0">
+          {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="">
+          {% else %}
+            {{ profile.user.first_name|first|upper }}{{ profile.user.last_name|first|upper }}
+          {% endif %}
+        </div>
+        <div style="min-width:0">
+          <div class="emp-name">
+            {{ profile.display_name }}
+            {% if profile.is_manager %}<i class="bi bi-star-fill text-warning" style="font-size:.7rem;"></i>{% endif %}
+          </div>
+          <div class="emp-title">{{ profile.job_title|default:"—" }}</div>
+          {% if profile.user.email %}
+          <div class="emp-title mt-1" style="color:#94a3b8;">{{ profile.user.email }}</div>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% with children=dept.children.all %}
+    {% if children %}
+    <div class="dept-children pb-1">
+      {% for child in children %}
+        {% include "employees/dept_section.html" with dept=child depth=0 %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+  </div>
+</div>
+{% endwith %}

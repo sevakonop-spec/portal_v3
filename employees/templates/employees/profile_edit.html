@@ -1,0 +1,118 @@
+{% extends "employees/base.html" %}
+{% block title %}My Profile — Corporate Portal{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">My Profile</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <div class="avatar-circle avatar-lg">
+        {% if request.user.profile.avatar %}
+          <img src="{{ request.user.profile.avatar.url }}" alt="">
+        {% else %}
+          {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+        {% endif %}
+      </div>
+      <div>
+        <h4 class="mb-0">{{ request.user.get_full_name|default:request.user.username }}</h4>
+        <p class="text-secondary mb-0">{{ request.user.profile.job_title|default:"Add your job title below" }}</p>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom py-3">
+          <h6 class="mb-0 fw-bold"><i class="bi bi-person-lines-fill text-primary me-2"></i>Personal Information</h6>
+        </div>
+        <div class="card-body py-3">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">First Name</label>
+              {{ user_form.first_name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Last Name</label>
+              {{ user_form.last_name }}
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Email</label>
+              {{ user_form.email }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom py-3">
+          <h6 class="mb-0 fw-bold"><i class="bi bi-briefcase-fill text-primary me-2"></i>Work Details</h6>
+        </div>
+        <div class="card-body py-3">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Job Title</label>
+              {{ profile_form.job_title }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Department</label>
+              {{ profile_form.department }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Office Phone</label>
+              {{ profile_form.phone }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Mobile Phone</label>
+              {{ profile_form.mobile }}
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Location / Office</label>
+              {{ profile_form.location }}
+            </div>
+            <div class="col-12 d-flex align-items-center gap-2">
+              {{ profile_form.is_manager }}
+              <label class="form-check-label fw-semibold" style="font-size:.85rem;">I am a department manager</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+          <h6 class="mb-0 fw-bold"><i class="bi bi-card-text text-primary me-2"></i>About Me &amp; Avatar</h6>
+        </div>
+        <div class="card-body py-3">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Bio</label>
+              {{ profile_form.bio }}
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Profile Photo</label>
+              {{ profile_form.avatar }}
+              {% if request.user.profile.avatar %}
+                <div class="mt-2">
+                  <img src="{{ request.user.profile.avatar.url }}" alt="Current avatar"
+                       style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;">
+                  <span class="text-secondary ms-2" style="font-size:.8rem;">Current photo</span>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="bi bi-check-lg me-1"></i> Save Changes
+        </button>
+        <a href="{% url 'directory' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

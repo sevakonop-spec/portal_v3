@@ -1,0 +1,104 @@
+{% extends "employees/base.html" %}
+{% block title %}{{ employee.get_full_name|default:employee.username }} — Corporate Portal{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'directory' %}">Directory</a></li>
+<li class="breadcrumb-item active">{{ employee.get_full_name|default:employee.username }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+
+        <div class="d-flex align-items-start gap-4 mb-4">
+          <div class="avatar-circle avatar-lg flex-shrink-0">
+            {% if profile.avatar %}
+              <img src="{{ profile.avatar.url }}" alt="">
+            {% else %}
+              {{ employee.first_name|first|upper }}{{ employee.last_name|first|upper }}
+            {% endif %}
+          </div>
+          <div>
+            <h4 class="mb-0">{{ employee.get_full_name|default:employee.username }}</h4>
+            <p class="text-primary fw-semibold mb-1">{{ profile.job_title|default:"—" }}</p>
+            {% if profile.department %}
+            <span class="badge bg-light text-secondary border">
+              <i class="bi bi-diagram-3 me-1"></i>{{ profile.department.name }}
+            </span>
+            {% endif %}
+            {% if profile.is_manager %}
+            <span class="badge ms-1" style="background:#fef3c7;color:#92400e;">
+              <i class="bi bi-star-fill me-1"></i>Manager
+            </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row g-3">
+          {% if employee.email %}
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 p-3 rounded" style="background:#f8fafc;">
+              <i class="bi bi-envelope-fill text-primary fs-5"></i>
+              <div>
+                <div style="font-size:.75rem;color:#64748b;font-weight:600;">Email</div>
+                <a href="mailto:{{ employee.email }}" class="text-dark text-decoration-none" style="font-size:.9rem;">{{ employee.email }}</a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% if profile.phone %}
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 p-3 rounded" style="background:#f8fafc;">
+              <i class="bi bi-telephone-fill text-primary fs-5"></i>
+              <div>
+                <div style="font-size:.75rem;color:#64748b;font-weight:600;">Phone</div>
+                <a href="tel:{{ profile.phone }}" class="text-dark text-decoration-none" style="font-size:.9rem;">{{ profile.phone }}</a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% if profile.mobile %}
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 p-3 rounded" style="background:#f8fafc;">
+              <i class="bi bi-phone-fill text-primary fs-5"></i>
+              <div>
+                <div style="font-size:.75rem;color:#64748b;font-weight:600;">Mobile</div>
+                <a href="tel:{{ profile.mobile }}" class="text-dark text-decoration-none" style="font-size:.9rem;">{{ profile.mobile }}</a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% if profile.location %}
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 p-3 rounded" style="background:#f8fafc;">
+              <i class="bi bi-geo-alt-fill text-primary fs-5"></i>
+              <div>
+                <div style="font-size:.75rem;color:#64748b;font-weight:600;">Location</div>
+                <span style="font-size:.9rem;">{{ profile.location }}</span>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if profile.bio %}
+        <hr>
+        <h6 class="fw-bold mb-2" style="font-size:.85rem;">About</h6>
+        <p style="font-size:.9rem;color:#334155;">{{ profile.bio|linebreaksbr }}</p>
+        {% endif %}
+
+        {% if employee == request.user %}
+        <hr>
+        <a href="{% url 'profile_edit' %}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-pencil me-1"></i> Edit My Profile
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

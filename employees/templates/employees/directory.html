@@ -1,0 +1,96 @@
+{% extends "employees/base.html" %}
+{% block title %}Employee Directory — Corporate Portal{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Employee Directory</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h5 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Employee Directory</h5>
+  <a href="{% url 'org_tree' %}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-diagram-3 me-1"></i> Org Chart View
+  </a>
+</div>
+
+<form method="get" class="mb-4">
+  <div class="input-group search-bar" style="max-width:420px;">
+    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
+    <input type="text" name="q" value="{{ query }}" class="form-control border-start-0 ps-0"
+           placeholder="Search by name, title, department…" autofocus>
+    {% if query %}
+    <a href="{% url 'directory' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-x-lg"></i>
+    </a>
+    {% endif %}
+    <button type="submit" class="btn btn-primary">Search</button>
+  </div>
+</form>
+
+{% if query %}
+  <p class="text-secondary mb-3" style="font-size:.88rem;">
+    {{ search_results|length }} result{{ search_results|length|pluralize }} for "<strong>{{ query }}</strong>"
+  </p>
+  <div class="row g-3">
+    {% for profile in search_results %}
+    <div class="col-md-6 col-lg-4">
+      <a href="{% url 'employee_detail' profile.user.pk %}" class="employee-card {% if profile.is_manager %}manager-card{% endif %} d-flex">
+        <div class="avatar-circle flex-shrink-0">
+          {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="">
+          {% else %}
+            {{ profile.user.first_name|first|upper }}{{ profile.user.last_name|first|upper }}
+          {% endif %}
+        </div>
+        <div style="min-width:0">
+          <div class="emp-name">{{ profile.display_name }}</div>
+          <div class="emp-title">{{ profile.job_title|default:"—" }}</div>
+          {% if profile.department %}
+          <div class="emp-title mt-1"><i class="bi bi-diagram-3 me-1"></i>{{ profile.department.name }}</div>
+          {% endif %}
+        </div>
+      </a>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <p class="text-secondary">No employees found matching your search.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  {% for dept in root_departments %}
+    {% include "employees/dept_section.html" with dept=dept depth=0 %}
+  {% endfor %}
+
+  {% if unassigned %}
+  <div class="dept-card">
+    <div class="dept-card-header" data-bs-toggle="collapse" data-bs-target="#dept-unassigned">
+      <div class="dept-icon"><i class="bi bi-question-circle"></i></div>
+      <span class="dept-name text-secondary">Unassigned</span>
+      <span class="dept-badge">{{ unassigned|length }}</span>
+      <i class="bi bi-chevron-down ms-2 text-secondary" style="font-size:.75rem;"></i>
+    </div>
+    <div id="dept-unassigned" class="collapse show">
+      <div class="employee-grid">
+        {% for profile in unassigned %}
+        <a href="{% url 'employee_detail' profile.user.pk %}" class="employee-card">
+          <div class="avatar-circle flex-shrink-0">
+            {% if profile.avatar %}
+              <img src="{{ profile.avatar.url }}" alt="">
+            {% else %}
+              {{ profile.user.first_name|first|upper }}{{ profile.user.last_name|first|upper }}
+            {% endif %}
+          </div>
+          <div style="min-width:0">
+            <div class="emp-name">{{ profile.display_name }}</div>
+            <div class="emp-title">{{ profile.job_title|default:"—" }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}

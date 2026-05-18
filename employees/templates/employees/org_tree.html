@@ -1,0 +1,575 @@
+{% extends "employees/base.html" %}
+{% block title %}Org Chart — Corporate Portal{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Org Chart</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h5 class="fw-bold mb-0">
+    <i class="bi bi-diagram-3-fill text-primary me-2"></i>Organization Chart
+  </h5>
+  <div class="d-flex gap-2 align-items-center">
+    <button class="btn btn-sm btn-outline-secondary" id="btn-expand-all">
+      <i class="bi bi-arrows-expand me-1"></i>Expand all
+    </button>
+    <button class="btn btn-sm btn-outline-secondary" id="btn-collapse-all">
+      <i class="bi bi-arrows-collapse me-1"></i>Collapse all
+    </button>
+    <a href="{% url 'directory' %}" class="btn btn-sm btn-outline-primary">
+      <i class="bi bi-people me-1"></i>Directory view
+    </a>
+  </div>
+</div>
+
+{{ tree_json|json_script:"oc-data" }}
+
+<div id="oc-root" class="oc-scroll-area"></div>
+
+<div id="oc-tooltip" class="oc-tooltip" style="display:none;"></div>
+
+<style>
+/* ── Layout ── */
+.oc-scroll-area {
+  overflow-x: auto;
+  padding: 1.5rem 0 3rem;
+  min-height: 300px;
+}
+
+/* Each column = one level of the hierarchy */
+.oc-col {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: top;
+}
+
+/* A single tree level: a row of sibling department groups */
+.oc-level {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0;
+}
+
+/* Wrapper for one department node + its subtree */
+.oc-node-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 0 20px;
+}
+
+/* Vertical line going from the connector down to a node */
+.oc-v-in {
+  width: 2px;
+  height: 28px;
+  background: #c8d3e0;
+  flex-shrink: 0;
+}
+
+/* Horizontal line strip connecting siblings */
+.oc-h-bar {
+  height: 2px;
+  background: #c8d3e0;
+  position: absolute;
+  top: 0;
+  pointer-events: none;
+}
+
+/* Vertical drop from horizontal bar to each child's v-in */
+.oc-v-drop {
+  width: 2px;
+  background: #c8d3e0;
+  flex-shrink: 0;
+}
+
+/* Container for the subtree children row */
+.oc-children-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.oc-children-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+}
+
+/* ── Department card ── */
+.oc-dept {
+  background: #fff;
+  border-radius: 12px;
+  border: 1.5px solid #dde3ed;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  min-width: 210px;
+  max-width: 320px;
+  cursor: default;
+  user-select: none;
+  transition: box-shadow .15s, border-color .15s;
+}
+.oc-dept:hover {
+  box-shadow: 0 4px 18px rgba(0,82,200,.13);
+  border-color: #93c5fd;
+}
+
+.oc-dept-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 12px;
+  border-radius: 10px 10px 0 0;
+  border-bottom: 1.5px solid #dde3ed;
+  background: #f0f6ff;
+  cursor: pointer;
+}
+.oc-dept-head.depth-0 { background: linear-gradient(135deg, #1a4fc4 0%, #2563eb 100%); color: #fff; border-bottom-color: rgba(255,255,255,.2); }
+.oc-dept-head.depth-1 { background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%); color: #fff; border-bottom-color: rgba(255,255,255,.2); }
+.oc-dept-head.depth-2 { background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%); color: #fff; border-bottom-color: rgba(255,255,255,.2); }
+.oc-dept-head.depth-0 .oc-dept-count { background: rgba(255,255,255,.2); color: #fff; }
+.oc-dept-head.depth-1 .oc-dept-count { background: rgba(255,255,255,.2); color: #fff; }
+.oc-dept-head.depth-2 .oc-dept-count { background: rgba(255,255,255,.2); color: #fff; }
+
+.oc-dept-icon {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.22);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem;
+  flex-shrink: 0;
+}
+.oc-dept-head:not([class*="depth-"]) .oc-dept-icon { background: #dbeafe; color: #1d4ed8; }
+
+.oc-dept-title { font-weight: 700; font-size: .87rem; flex: 1; }
+.oc-dept-count {
+  background: #e0edff; color: #1d4ed8;
+  font-size: .72rem; font-weight: 700;
+  border-radius: 99px; padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+.oc-toggle {
+  background: none; border: none; padding: 0 2px;
+  color: inherit; opacity: .7; cursor: pointer;
+  font-size: .8rem; flex-shrink: 0;
+  transition: transform .2s;
+}
+.oc-toggle.collapsed { transform: rotate(-90deg); }
+
+.oc-dept-desc {
+  padding: 4px 12px 6px;
+  font-size: .75rem;
+  color: #64748b;
+  border-bottom: 1px solid #f0f4f8;
+}
+
+/* ── Employee grid inside a dept ── */
+.oc-emp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+
+/* ── Person card ── */
+.oc-person {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: #f8fafc;
+  border: 1.5px solid #e8edf3;
+  border-radius: 9px;
+  padding: 8px 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow .15s, border-color .15s, background .15s;
+  cursor: pointer;
+}
+.oc-person:hover {
+  background: #fff;
+  border-color: #93c5fd;
+  box-shadow: 0 2px 10px rgba(37,99,235,.12);
+  color: inherit;
+}
+.oc-person.is-manager {
+  border-top: 2px solid #f59e0b;
+  background: #fffbeb;
+}
+.oc-person.is-manager:hover { background: #fff; }
+
+.oc-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  font-size: .8rem;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  letter-spacing: .02em;
+}
+.oc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.oc-person-info { min-width: 0; }
+.oc-person-name {
+  font-weight: 600;
+  font-size: .8rem;
+  color: #1e293b;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.oc-person-title {
+  font-size: .72rem;
+  color: #64748b;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 1px;
+}
+.oc-mgr-star {
+  display: inline-block;
+  color: #f59e0b;
+  font-size: .65rem;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+/* ── Tooltip ── */
+.oc-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: #1e293b;
+  color: #f1f5f9;
+  font-size: .8rem;
+  border-radius: 8px;
+  padding: 10px 14px;
+  pointer-events: none;
+  max-width: 240px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  line-height: 1.5;
+}
+
+/* ── Empty state ── */
+.oc-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #94a3b8;
+}
+
+/* ── Unassigned section ── */
+.oc-unassigned-section {
+  margin-top: 2.5rem;
+  background: #fff;
+  border-radius: 12px;
+  border: 1.5px dashed #cbd5e1;
+  padding: 14px;
+}
+.oc-unassigned-title {
+  font-size: .82rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+</style>
+
+<script>
+(function () {
+  const raw = JSON.parse(document.getElementById('oc-data').textContent);
+  const root = document.getElementById('oc-root');
+  const tooltip = document.getElementById('oc-tooltip');
+
+  const AVATAR_COLORS = ['#2563eb','#7c3aed','#0891b2','#059669','#dc2626','#d97706','#0284c7','#9333ea'];
+  function avatarColor(name) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return AVATAR_COLORS[h % AVATAR_COLORS.length];
+  }
+
+  /* ── Person card ── */
+  function makePersonCard(emp) {
+    const a = document.createElement('a');
+    a.href = `/employee/${emp.pk}/`;
+    a.className = 'oc-person' + (emp.is_manager ? ' is-manager' : '');
+
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'oc-avatar';
+    avatarDiv.style.background = avatarColor(emp.name);
+    if (emp.avatar) {
+      const img = document.createElement('img');
+      img.src = emp.avatar;
+      img.alt = emp.name;
+      avatarDiv.appendChild(img);
+    } else {
+      avatarDiv.textContent = emp.initials || '?';
+    }
+
+    const info = document.createElement('div');
+    info.className = 'oc-person-info';
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'oc-person-name';
+    nameDiv.textContent = emp.name;
+    if (emp.is_manager) {
+      const star = document.createElement('span');
+      star.className = 'oc-mgr-star';
+      star.innerHTML = '&#9733;';
+      star.title = 'Manager';
+      nameDiv.appendChild(star);
+    }
+
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'oc-person-title';
+    titleDiv.textContent = emp.title || '—';
+
+    info.appendChild(nameDiv);
+    info.appendChild(titleDiv);
+    a.appendChild(avatarDiv);
+    a.appendChild(info);
+
+    /* Tooltip */
+    a.addEventListener('mouseenter', (e) => showTooltip(e, emp));
+    a.addEventListener('mousemove', moveTooltip);
+    a.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+    return a;
+  }
+
+  function showTooltip(e, emp) {
+    let html = `<strong>${emp.name}</strong>`;
+    if (emp.title) html += `<br><span style="color:#94a3b8">${emp.title}</span>`;
+    if (emp.email) html += `<br><i class="bi bi-envelope" style="margin-right:4px"></i>${emp.email}`;
+    if (emp.phone) html += `<br><i class="bi bi-telephone" style="margin-right:4px"></i>${emp.phone}`;
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    moveTooltip(e);
+  }
+  function moveTooltip(e) {
+    tooltip.style.left = (e.clientX + 14) + 'px';
+    tooltip.style.top  = (e.clientY + 14) + 'px';
+  }
+
+  /* ── Department node ── */
+  function makeDeptNode(dept, depth) {
+    const totalPeople = countPeople(dept);
+    const wrap = document.createElement('div');
+    wrap.className = 'oc-node-wrap';
+
+    /* Vertical line coming in from above (except root) */
+    if (depth > 0) {
+      const vin = document.createElement('div');
+      vin.className = 'oc-v-in';
+      wrap.appendChild(vin);
+    }
+
+    /* Department card */
+    const card = document.createElement('div');
+    card.className = 'oc-dept';
+
+    /* Header */
+    const head = document.createElement('div');
+    head.className = `oc-dept-head depth-${Math.min(depth, 2)}`;
+
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'oc-dept-icon';
+    iconDiv.innerHTML = depth === 0
+      ? '<i class="bi bi-building-fill"></i>'
+      : depth === 1
+        ? '<i class="bi bi-diagram-2-fill"></i>'
+        : '<i class="bi bi-folder-fill"></i>';
+
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'oc-dept-title';
+    titleDiv.textContent = dept.name;
+
+    const countBadge = document.createElement('div');
+    countBadge.className = 'oc-dept-count';
+    countBadge.textContent = totalPeople;
+
+    head.appendChild(iconDiv);
+    head.appendChild(titleDiv);
+    head.appendChild(countBadge);
+
+    const hasChildren = dept.children && dept.children.length > 0;
+    let toggleBtn = null;
+    let childrenArea = null;
+
+    if (hasChildren) {
+      toggleBtn = document.createElement('button');
+      toggleBtn.className = 'oc-toggle';
+      toggleBtn.innerHTML = '<i class="bi bi-chevron-down"></i>';
+      toggleBtn.title = 'Collapse';
+      head.appendChild(toggleBtn);
+    }
+
+    card.appendChild(head);
+
+    /* Description */
+    if (dept.description) {
+      const desc = document.createElement('div');
+      desc.className = 'oc-dept-desc';
+      desc.textContent = dept.description;
+      card.appendChild(desc);
+    }
+
+    /* Employee grid */
+    if (dept.employees && dept.employees.length > 0) {
+      const grid = document.createElement('div');
+      grid.className = 'oc-emp-grid';
+      dept.employees.forEach(emp => grid.appendChild(makePersonCard(emp)));
+      card.appendChild(grid);
+    }
+
+    wrap.appendChild(card);
+
+    /* Children area */
+    if (hasChildren) {
+      childrenArea = makeChildrenArea(dept.children, depth + 1);
+      wrap.appendChild(childrenArea);
+
+      /* Toggle logic */
+      let collapsed = false;
+      head.style.cursor = 'pointer';
+      head.addEventListener('click', () => {
+        collapsed = !collapsed;
+        childrenArea.style.display = collapsed ? 'none' : '';
+        toggleBtn.classList.toggle('collapsed', collapsed);
+        toggleBtn.title = collapsed ? 'Expand' : 'Collapse';
+      });
+    }
+
+    return wrap;
+  }
+
+  /* ── Children area with connector lines ── */
+  function makeChildrenArea(children, depth) {
+    const area = document.createElement('div');
+    area.className = 'oc-children-area';
+
+    /* Short vertical drop from parent card to horizontal bar */
+    const vDrop = document.createElement('div');
+    vDrop.style.cssText = 'width:2px;height:20px;background:#c8d3e0;flex-shrink:0;';
+    area.appendChild(vDrop);
+
+    /* Row of child nodes with relative positioning for H-bar */
+    const row = document.createElement('div');
+    row.className = 'oc-children-row';
+    row.style.position = 'relative';
+
+    children.forEach(child => {
+      row.appendChild(makeDeptNode(child, depth));
+    });
+    area.appendChild(row);
+
+    /* Draw horizontal bar after row is in DOM (use requestAnimationFrame) */
+    requestAnimationFrame(() => drawHBar(row));
+
+    return area;
+  }
+
+  /* ── Draw horizontal connector bar ── */
+  function drawHBar(row) {
+    const nodes = row.querySelectorAll(':scope > .oc-node-wrap');
+    if (nodes.length < 2) return;
+
+    const rowRect = row.getBoundingClientRect();
+    const firstRect = nodes[0].getBoundingClientRect();
+    const lastRect  = nodes[nodes.length - 1].getBoundingClientRect();
+
+    const left  = firstRect.left  + firstRect.width  / 2 - rowRect.left;
+    const right = lastRect.left   + lastRect.width   / 2 - rowRect.left;
+
+    const bar = document.createElement('div');
+    bar.className = 'oc-h-bar';
+    bar.style.left  = left  + 'px';
+    bar.style.width = (right - left) + 'px';
+    row.appendChild(bar);
+  }
+
+  /* ── Count all people in a subtree ── */
+  function countPeople(dept) {
+    let n = (dept.employees || []).length;
+    (dept.children || []).forEach(c => { n += countPeople(c); });
+    return n;
+  }
+
+  /* ── Render ── */
+  function render() {
+    root.innerHTML = '';
+
+    if (!raw.departments.length && !raw.unassigned.length) {
+      const empty = document.createElement('div');
+      empty.className = 'oc-empty';
+      empty.innerHTML = '<i class="bi bi-diagram-3 fs-1 d-block mb-3"></i>No departments yet. <a href="/admin/">Add them in the admin panel.</a>';
+      root.appendChild(empty);
+      return;
+    }
+
+    /* Root level row */
+    if (raw.departments.length) {
+      const levelRow = document.createElement('div');
+      levelRow.className = 'oc-level';
+      levelRow.style.position = 'relative';
+      raw.departments.forEach(dept => {
+        levelRow.appendChild(makeDeptNode(dept, 0));
+      });
+      root.appendChild(levelRow);
+      requestAnimationFrame(() => {
+        if (raw.departments.length > 1) drawHBar(levelRow);
+      });
+    }
+
+    /* Unassigned employees */
+    if (raw.unassigned.length) {
+      const section = document.createElement('div');
+      section.className = 'oc-unassigned-section';
+
+      const title = document.createElement('div');
+      title.className = 'oc-unassigned-title';
+      title.innerHTML = `<i class="bi bi-question-circle"></i> Not assigned to a department <span class="dept-badge">${raw.unassigned.length}</span>`;
+      section.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'oc-emp-grid';
+      raw.unassigned.forEach(emp => grid.appendChild(makePersonCard(emp)));
+      section.appendChild(grid);
+
+      root.appendChild(section);
+    }
+  }
+
+  render();
+
+  /* Redraw H-bars on window resize (widths change) */
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      document.querySelectorAll('.oc-h-bar').forEach(b => b.remove());
+      document.querySelectorAll('.oc-children-row').forEach(drawHBar);
+      const levelRow = root.querySelector('.oc-level');
+      if (levelRow && raw.departments.length > 1) drawHBar(levelRow);
+    }, 100);
+  });
+
+  /* Expand / Collapse all buttons */
+  document.getElementById('btn-expand-all').addEventListener('click', () => {
+    document.querySelectorAll('.oc-children-area').forEach(a => { a.style.display = ''; });
+    document.querySelectorAll('.oc-toggle').forEach(b => { b.classList.remove('collapsed'); b.title = 'Collapse'; });
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.oc-h-bar').forEach(b => b.remove());
+      document.querySelectorAll('.oc-children-row').forEach(drawHBar);
+      const levelRow = root.querySelector('.oc-level');
+      if (levelRow && raw.departments.length > 1) drawHBar(levelRow);
+    });
+  });
+
+  document.getElementById('btn-collapse-all').addEventListener('click', () => {
+    document.querySelectorAll('.oc-children-area').forEach(a => { a.style.display = 'none'; });
+    document.querySelectorAll('.oc-toggle').forEach(b => { b.classList.add('collapsed'); b.title = 'Expand'; });
+  });
+})();
+</script>
+{% endblock %}
